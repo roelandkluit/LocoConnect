@@ -1,0 +1,11 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/BIN
+/__vm
+/.vs
+/LocoConnect.vcxproj.vspscc
+/LocoReader.vcxproj.vspscc
+/LocoConnect.vcxproj.filters
+/LocoConnect.vcxproj.user

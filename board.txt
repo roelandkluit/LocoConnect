@@ -1,0 +1,7 @@
+# DCCSwitchDecoderAT328p build property overrides
+#
+#https://www.visualmicro.com/forums/YaBB.pl?num=1545471409
+#
+# Increment version after succesfull build
+recipe.hooks.objcopy.postobjcopy.1.pattern=cmd.exe /c {build.project_path}\version.bat {build.project_path}\version-build.h
+recipe.hooks.postbuild.1.pattern=cmd.exe /c %localappdata%\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\bin\objcopy.exe -I ihex -O binary LocoConnect.ino.hex {build.project_path}\BIN\LCONNECT.BIN
