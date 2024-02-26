@@ -1,4 +1,4 @@
-# DCCSwitchDecoderAT328p build property overrides
+# Build property overrides
 #
 #https://www.visualmicro.com/forums/YaBB.pl?num=1545471409
 #

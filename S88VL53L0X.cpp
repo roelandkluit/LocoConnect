@@ -119,10 +119,13 @@ bool S88VL53L0X::LoadPinValuesFromNVRAM()
 
 void S88VL53L0X::PCA9548PortSelect(const uint8_t& index)
 {
-	if (index > 7) return;
+	if (index > 7 && index != 0xFF ) return;
 
 	Wire.beginTransmission(PCA9548_ADDR);
-	Wire.write(1 << index);
+	if(index == 0xFF)
+		Wire.write(0);
+	else
+		Wire.write(1 << index);
 	Wire.endTransmission();
 }
 
@@ -212,6 +215,7 @@ void S88VL53L0X::Process()
 		{
 			if (SensorReadingIndex >= PCA9548_PORT_COUNT)
 			{
+				PCA9548PortSelect(0xFF);
 				SensorReadingIndex = 0;
 				previousRefreshMillis = millis();
 			}
