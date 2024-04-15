@@ -1,34 +1,43 @@
 # LocoConnect
 LocoConnect controller board Firmware
 
-## Compilation and upload
+## Description:
+
+The LConnect is a low cost efficient Loconet feedback and accessories decoder for model railroad. It is created to allow extensive but affordable interaction between the loconet bus and model railroad equipment.
+It has far more features than most commercial of the shelve devices. However, due to the limits of the relatively cheap ATmega328p cpu, the possibilities are not endless.
+The controller has the following features:
+
+## Installation:
+### Option A: Compilation and upload using Serial
 
 - Install Arduino IDE 2.0 or later
 - install the required depandancies
 - Download the source code
 - Compile and upload
 
-## Firmware upload using SD card
+### Option B: Firmware upload using SD card
 
 **Requires the LocoConnect bootloader to be installed:** https://github.com/LocoConnect/LCBootloader/releases<br />
+- Install Arduino IDE 2.0 or later
+- install the required depandancies
+- Download the source code
+- Compile
 - Convert Hex output file to binary file:<br />
 ```shell
 %localappdata%\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\bin\objcopy.exe -I ihex -O binary LocoConnect.ino.hex LCONNECT.BIN
 ```
 - Copy the LCONNECT.BIN file to the SD Card<br />
 - Attach the SD Card to the SPI connector of the PCB
+- Power on or reset the LocoConnect device.
 
-## Features
+## Features:
 
-The LConnect is a low cost efficient Loconet feedback and accessories decoder for model railroad. It is created to allow extensive but affordable interaction between the loconet bus and model railroad equipment.
-It has far more features than most commercial of the shelve devices. However, due to the limits of the relatively cheap ATmega328p cpu, the possibilities are not endless.
-The controller has the following features:
+### Track occupation and feedback:
 
-### Track occupation and feedback.
-Track occupation and feedback:
-    - Native S88/S88n:
-    - 1 S88 / s88n occupation bus for maximum of 16x8 contacts.
-    - The PCB has a second S88 connector for future usage.
+**Native S88/S88n interface**
+- A primary S88 / s88n occupation bus for maximum of 16x8 contacts.
+- The PCB has a second S88 connector for future usage.
+- The S88 routine is timer interrupt based.
 
 **I2C based occupation:**
 -	The I2C connection supports 16 x 8 feedback modules based on the PCF8574 chip.
@@ -42,6 +51,9 @@ Track occupation and feedback:
 -	The S88 feedback report can be configured to always send reports, only when the central is in GO mode or always and refresh when switching to GO.
 -	The occupied contacts Loconet messages are sent with a higher priority order.
 -	The configuration utility enables the configuration and ability to monitor S88 activity from the configuration pages.
+
+**VL53L0X**
+-   A custom firmware version is available for use with the [VL53L0X sensors](https://www.google.com/search?q=VL53L0X)
 	
 ### Loconet Features.
 -	The PCB has a STOP and GO Led.
