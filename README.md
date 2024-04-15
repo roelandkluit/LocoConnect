@@ -10,13 +10,13 @@ LocoConnect controller board Firmware
 
 ## Firmware upload using SD card
 
-**Requires the LocoConnect bootloader to be installed ** https://github.com/LocoConnect/LCBootloader/releases<br />
-Convert Hex output file to binary file:<br />
+**Requires the LocoConnect bootloader to be installed:** https://github.com/LocoConnect/LCBootloader/releases<br />
+- Convert Hex output file to binary file:<br />
 ```shell
 %localappdata%\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\bin\objcopy.exe -I ihex -O binary LocoConnect.ino.hex LCONNECT.BIN
 ```
-Copy the LCONNECT.BIN file to the SD Card<br />
-Attach the SD Card to the SPI connector of the PCB
+- Copy the LCONNECT.BIN file to the SD Card<br />
+- Attach the SD Card to the SPI connector of the PCB
 
 ## Features
 
@@ -90,6 +90,7 @@ Upload TODO: [PCBWAY - DIP Version](http://todo/)
 Leds and Servo: [PCA9685 Boards](https://www.google.com/search?q=PCA9685+board)
 Occupation: [I2C Occupation Board](https://www.google.com/search?q=PCF8574+board)
 Occupation: Marklin Feedback module for I2C: [PCBWAY - DIP Version](http://todo/)
+Occupation: VLX Modules: - Todo
 
 ## Configuration
 
