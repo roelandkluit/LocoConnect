@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #include "I2CBase.h"
 #endif 
 
-#if defined(NATIVE_S88_ENABLED) || defined (PCF8574_I2C_ADDR)
+#if defined(NATIVE_S88_ENABLED) || defined (LOCAL_I2C_S88_ENABLED)
     #include "S88Interface.h"
 #endif
 
@@ -84,17 +84,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef NATIVE_S88_ENABLED
     S88Interface S88_Native(S88_DATA1, S88_CLOCK, S88_LOAD, S88_RESET);// , S88_DATA2);
-#endif //NATIVE_S88_ENABLED
+#endif
 
-#ifdef PCF8574_I2C_ADDR
-    S88Interface S88_I2C(PCF8574_I2C_ADDR);
+#ifdef LOCAL_I2C_S88_ENABLED
+    S88Interface S88_I2C(PCF8574AT_I2C_ADDR);
     uint16_t S88_I2C_StartIndex = 0;
-#endif // PCF8574_I2C_ADDR
+#endif
 
 #ifdef PCA9685_I2C_ADDR_START
     PWMOutputManager pca9685I2C;
     struct__Servo_Position_Override ServoPositioningSV;
-#endif // SERVO_I2C_ADDR
+#endif
 
 #ifdef  VL53L0XVersion
     S88VL53L0X vlx;
@@ -377,7 +377,7 @@ void OnReportSensor(const uint16_t &report_index, const uint8_t &Status, bool& s
     success = true;
 }
 
-#ifdef  PCF8574_I2C_ADDR
+#ifdef  LOCAL_I2C_S88_ENABLED
 void OnReportI2CS88(const uint8_t& index, const uint8_t& Status, bool& success)
 {
     if (S88_I2C_StartIndex != 0)
@@ -385,7 +385,7 @@ void OnReportI2CS88(const uint8_t& index, const uint8_t& Status, bool& success)
         OnReportSensor(index + S88_I2C_StartIndex, Status, success);
     }
 }
-#endif // PCF8574_I2C_ADDR
+#endif
 
 #ifdef VL53L0XVersion
 void OnReportVL53LS88(const uint8_t& index, const uint8_t& Status, bool& success)
@@ -395,8 +395,7 @@ void OnReportVL53LS88(const uint8_t& index, const uint8_t& Status, bool& success
         OnReportSensor(index + S88_VL53L0X_StartIndex, Status, success);
     }
 }
-#endif // PCF8574_I2C_ADDR
-
+#endif
 
 void OnReportLocalS88(const uint8_t& index, const uint8_t& Status, bool& success)
 {
@@ -490,10 +489,23 @@ void GetConfiguredValues()
         vlx.LoadPinValuesFromNVRAM();
     #endif //  VL53L0XVersion
 
-    #ifdef PCF8574_I2C_ADDR
+    #ifdef LOCAL_I2C_S88_ENABLED
         //S88 I2C Chain
         uint16_t local__S88_I2C_StartIndex = NVRAM::readLNCV(CV_ACCESSORY_DECODER_S88_I2C_START_ADDRES);
-        uint8_t local__S88_I2C_ModuleCount = NVRAM::readLNCV(CV_ACCESSORY_DECODER_S88_I2C_ADDRES_COUNT);
+        uint16_t local__S88_I2C_ModuleCountInfo = NVRAM::readLNCV(CV_ACCESSORY_DECODER_S88_I2C_ADDRES_COUNT);
+        uint8_t local__S88_I2C_ModuleCount = (local__S88_I2C_ModuleCountInfo & 0xFF);
+        uint8_t local_S88_USE_TIC2_Modules = local__S88_I2C_ModuleCountInfo >> 8;
+
+        if (local_S88_USE_TIC2_Modules == 0)
+        {
+            S88_I2C.ChangeI2C_StartAddr(PCF8574AT_I2C_ADDR);
+            LR_SPRNL(F("AT mod"));
+        }
+        else
+        {
+            S88_I2C.ChangeI2C_StartAddr(PCF8574T_I2C_ADDR);
+            LR_SPRNL(F("T mod"));
+        }
 
         if (local__S88_I2C_StartIndex != S88_I2C_StartIndex || local__S88_I2C_ModuleCount != S88_I2C.GetS88moduleCount())
         {
@@ -653,7 +665,7 @@ void setup()
         pca9685I2C.init(PCA9685_I2C_ADDR_START);
     #endif
 
-    #ifdef PCF8574_I2C_ADDR
+    #ifdef LOCAL_I2C_S88_ENABLED
         S88_I2C.SetOnS88ReportEvent(&OnReportI2CS88);
     #endif    
 
@@ -712,7 +724,7 @@ void SetRunningStatus(bool status)
                 S88_Local.LoconetOnGo();
             #endif
 
-            #ifdef PCF8574_I2C_ADDR
+            #ifdef LOCAL_I2C_S88_ENABLED
                 S88_I2C.LoconetOnGo();
             #endif      
 
@@ -741,7 +753,7 @@ void SetRunningStatus(bool status)
             S88_Local.LoconetOnStop();
         #endif
 
-        #ifdef PCF8574_I2C_ADDR
+        #ifdef LOCAL_I2C_S88_ENABLED
             S88_I2C.LoconetOnStop();
         #endif
 
@@ -817,7 +829,7 @@ void loop()
         }
     #endif
 
-    #ifdef PCF8574_I2C_ADDR
+    #ifdef LOCAL_I2C_S88_ENABLED
         else if (iLoopWaitCounter % 20 == 2)
         {
             if (!bBools.isJustBooted)
@@ -954,7 +966,7 @@ bool notifySVRead(uint16_t Offset, uint8_t& Value)
             S88_Local.ReportAll();
         #endif
 
-        #ifdef PCF8574_I2C_ADDR
+        #ifdef LOCAL_I2C_S88_ENABLED
             S88_I2C.ReportAll();
         #endif
 

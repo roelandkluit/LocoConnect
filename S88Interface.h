@@ -163,6 +163,7 @@ public:
 	*/
 	void Process();
 	void __process_ISR__Tick();
+	void ChangeI2C_StartAddr(const uint8_t& I2CAddress);
 };
 
 #endif

@@ -305,6 +305,14 @@ void S88Interface::__process_ISR__Tick()
     }
 }
 
+void S88Interface::ChangeI2C_StartAddr(const uint8_t& I2CAddress)
+{
+    if (PIN_CLOCK == 0)
+    {
+        PIN_DATA = I2CAddress;
+    }
+}
+
 void S88Interface::Process()
 {
     if ((isLoconetGo == 1) || S88ReportingBehavour != S88ReportingOptions::S88ReportOnlyWhenOnGo)
