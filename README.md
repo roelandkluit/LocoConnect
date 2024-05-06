@@ -40,9 +40,9 @@ The controller has the following features:
 - The S88 routine is timer interrupt based.
 
 **I2C based occupation:**
--	The I2C connection supports 16 x 8 feedback modules based on the PCF8574 chip.
+-	The I2C connection supports 16 x 8 feedback modules based on the PCF8574A or PCF8574AT chip. A module can only address either PCF8574A or PCF8574AT modules at the same time.
 -	The I2C feedback contacts will report as active if the I2C attached device is disconnected.
--	The I2C addressing starts with 56 (0x38) and the last maximum addressable feedback module is 64 (0x40). These internal I2C module device addresses are not to be confused with Loconet feedback addresses.
+-	The I2C addressing starts with 56 (0x38) or 32 (0x20) and the last maximum addressable feedback module is 8 (times 8 contacts) (0x40 or 0x28). These internal I2C module device addresses are not to be confused with Loconet feedback addresses.
 
 **Local occupation pins:**
 -	The PCB has 3 local input pins that can be configured as occupation sensors.

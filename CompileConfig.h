@@ -25,6 +25,9 @@
 //Enables the 4 local AUX pins for Feedback
 #define LOCAL_S88_ENABLED
 
+//Enables I2C occupation sensors
+#define LOCAL_I2C_S88_ENABLED
+
 //#Enabled Program Button
 #define PROGRAM_BUTTON_ENABLED
 
@@ -173,7 +176,8 @@ A5  I2C SCL
 #define LED_SYS A1
 //#define MAX_IR_REGISTERS 0
 #define PCA9685_I2C_ADDR_START 0x40 + 0x20
-#define PCF8574_I2C_ADDR 0x38
+#define PCF8574AT_I2C_ADDR 0x38
+#define PCF8574T_I2C_ADDR 0x20
 #define AT24CXX_I2C_ADDR 0x50
 #endif
 
@@ -278,7 +282,7 @@ A5  I2C SCL
 #define SV_ACCESSORY_DECODER_ASPECTS_DATA_START 0x0080 //SV 0x00080 --> CV 0x0048
 #define SV_ACCESSORY_DECODER_ASPECTS_DATA_END SV_ACCESSORY_DECODER_ASPECTS_DATA_START + (MAX_NUMBER_OF_PWM_OUTPUT_PINS * SIZE_ACCESSORY_DECODER_I2C_BYTES_CONFIG)
 
-#if defined(PCA9685_I2C_ADDR_START) || defined(PCF8574_I2C_ADDR) || defined(VL53L0XVersion)
+#if defined(PCA9685_I2C_ADDR_START) || defined(LOCAL_I2C_S88_ENABLED) || defined(VL53L0XVersion)
     #define REQUIRES_I2C
 #endif
 
@@ -294,7 +298,7 @@ A5  I2C SCL
     #define HWCFG_BITMASK1 0
 #endif
 
-#ifdef PCF8574_I2C_ADDR
+#ifdef PCF8574AT_I2C_ADDR
     #define HWCFG_BITMASK2 4
 #else
     #define HWCFG_BITMASK2 0
