@@ -406,13 +406,18 @@ bool S88Interface::RefreshS88DataI2C()
 {
     if (S88ChainReadPosition < S88moduleCount)
     {
+        uint8_t DeviceAddr = PIN_DATA + S88ChainReadPosition;
         uint8_t newValues = 0x00;
-        if (I2C_CheckPWMDeviceOnAddress(PIN_DATA + S88ChainReadPosition))
+        if (I2C_CheckPWMDeviceOnAddress(DeviceAddr))
         {
-            if (Wire.requestFrom((int)(PIN_DATA + S88ChainReadPosition), 1))
+            if (Wire.requestFrom((int)(DeviceAddr), 1))
             {
                 newValues = Wire.read();
             }
+            //Enable internall pull-up
+            Wire.beginTransmission(DeviceAddr);
+            Wire.write(0xFF);
+            Wire.endTransmission(DeviceAddr);
         }
         for (uint8_t bit = 0; bit < 8; bit++)
         {
