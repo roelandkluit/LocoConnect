@@ -5,30 +5,6 @@ LocoConnect controller board Firmware
 
 The LConnect is a low cost efficient Loconet feedback and accessories decoder for model railroad. It is created to allow extensive but affordable interaction between the loconet bus and model railroad equipment.
 It has far more features than most commercial of the shelve devices. However, due to the limits of the relatively cheap ATmega328p cpu, the possibilities are not endless.
-The controller has the following features:
-
-## Installation:
-### Option A: Compilation and upload using Serial
-
-- Install Arduino IDE 2.0 or later
-- install the required depandancies
-- Download the source code
-- Compile and upload
-
-### Option B: Firmware upload using SD card
-
-**Requires the LocoConnect bootloader to be installed:** https://github.com/LocoConnect/LCBootloader/releases<br />
-- Install Arduino IDE 2.0 or later
-- install the required depandancies
-- Download the source code
-- Compile
-- Convert Hex output file to binary file:<br />
-```shell
-%localappdata%\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\bin\objcopy.exe -I ihex -O binary LocoConnect.ino.hex LCONNECT.BIN
-```
-- Copy the LCONNECT.BIN file to the SD Card<br />
-- Attach the SD Card to the SPI connector of the PCB
-- Power on or reset the LocoConnect device.
 
 ## Features:
 
@@ -87,22 +63,45 @@ The controller has the following features:
 -   Always measure if there is a voltage difference between the Loconet ground and the ground used to power the external PCA9685 modules prior to connecting the external power source. Use an isolated DC-DC converter or a galvanic separated power source to power PCA9685 modules to prevent short-circuit or damage to devices.
 -   Do not connect high power devices directly to the PCA9685 modules (for example miniature lamps and magnetic switch actuators). Refer to the PCA9685 chip specifications to prevent overloading the chip or pin contacts.
  
-The PCB can be ordered through [PCBWAY - SMD Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_f03eebf6.html) and [PCBWAY - DIP Version](http://todo/).
+The PCB can be ordered through [PCBWAY - SMD Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_f03eebf6.html) and [PCBWAY - DIP Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_eaf03a65.html).
 The ATmega328p PIN based CPU with the bootloader is available for ordering. Pre-made boards are not available at this time. If there is a high demand, I will research what the options are.
 
 ## LocoConnect PCB and components
 
-![LocoConnect Boards](./Images/boardsSMDandDIP.jpg)
+![LocoConnect Boards](./Images/boardsSMDandDIP.jpg)<br />
 
-[PCBWAY - SMD Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_f03eebf6.html)
-Upload TODO: [PCBWAY - DIP Version](http://todo/)
+[PCBWAY - SMD Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_f03eebf6.html)<br />
+[PCBWAY - DIP Version](https://www.pcbway.com/project/shareproject/LocoConnect_I2C_Loconet_Interface_card_eaf03a65.html)
 
 ## External hardware
 
-Leds and Servo: [PCA9685 Boards](https://www.google.com/search?q=PCA9685+board)
-Occupation: [I2C Occupation Board](https://www.google.com/search?q=PCF8574+board)
-Occupation: Marklin Feedback module for I2C: [PCBWAY - DIP Version](http://todo/)
-Occupation: VLX Modules: - Todo
+Leds and Servo: [PCA9685 Boards](https://www.google.com/search?q=PCA9685+board)<br />
+Occupation: [I2C Occupation Board](https://www.google.com/search?q=PCF8574+board)<br />
+Occupation: VLX Modules: [vl53L0X modules](https://www.google.com/search?q=vl53L0X)<br />
+Occupation: Marklin Feedback module for I2C: [PCBWAY - DIP Version](http://todo/)<br />
+
+## Installation:
+### Option A: Compilation and upload using Serial
+
+- Install Arduino IDE 2.0 or later
+- install the required depandancies
+- Download the source code
+- Compile and upload
+
+### Option B: Firmware upload using SD card
+
+**Requires the LocoConnect bootloader to be installed:** https://github.com/LocoConnect/LCBootloader/releases<br />
+- Install Arduino IDE 2.0 or later
+- install the required depandancies
+- Download the source code
+- Compile
+- Convert Hex output file to binary file:<br />
+```shell
+%localappdata%\arduino15\packages\arduino\tools\avr-gcc\7.3.0-atmel3.6.1-arduino7\avr\bin\objcopy.exe -I ihex -O binary LocoConnect.ino.hex LCONNECT.BIN
+```
+- Copy the LCONNECT.BIN file to the SD Card<br />
+- Attach the SD Card to the SPI connector of the PCB
+- Power on or reset the LocoConnect device.
 
 ## Configuration
 
