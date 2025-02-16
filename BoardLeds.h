@@ -57,7 +57,9 @@ public:
 	static void Init();
 	static void Process(LocoRunStatus& LocoRunMode);
 	static void SetLedStop();
+	static void SetLedStopGoOff();
 	static void SetLedGo();
+	static void SetLedStopGo();
 private:
 	static uint8_t Programblink;
 	static uint8_t RemainingLedOnTime;

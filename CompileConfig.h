@@ -14,7 +14,7 @@
 #define ACTIVE_HARDWARE_VERSION VERSION_1_3_PRINT_LAYOUT
 
 //Enables serial debugging, disabled by default to reduce RAM and Flash usage
-//#define WITH_SERIAL
+#define WITH_SERIAL
 
 //Enables the Native S88 Bus incl. RJ45 connector
 #define NATIVE_S88_ENABLED

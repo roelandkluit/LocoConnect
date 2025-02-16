@@ -69,6 +69,17 @@ void BoardLeds::SetLedStop()
 #endif
 }
 
+void BoardLeds::SetLedStopGoOff()
+{
+#ifdef LED_STOP_GO
+    digitalWrite(LED_STOP_GO, 0);
+#else
+    digitalWrite(LED_GO, LOW);
+    digitalWrite(LED_STOP, LOW);
+#endif
+}
+
+
 void BoardLeds::SetLedGo()
 {
 #ifdef LED_STOP_GO
@@ -76,6 +87,16 @@ void BoardLeds::SetLedGo()
 #else
     digitalWrite(LED_GO, HIGH);
     digitalWrite(LED_STOP, LOW);
+#endif
+}
+
+void BoardLeds::SetLedStopGo()
+{
+#ifdef LED_STOP_GO
+    digitalWrite(LED_STOP_GO, 255);
+#else
+    digitalWrite(LED_GO, HIGH);
+    digitalWrite(LED_STOP, HIGH);
 #endif
 }
 

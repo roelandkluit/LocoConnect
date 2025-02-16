@@ -696,7 +696,10 @@ void setup()
         }
     }*/
 
-    BoardLeds::SetLedStop();
+    BoardLeds::SetLedStopGo();
+    delay(1000);
+    BoardLeds::SetLedStopGoOff();
+    delay(1000);
     NVRAM::SetOnSVChanged(notifySVChange);
 
     wdt_reset();
