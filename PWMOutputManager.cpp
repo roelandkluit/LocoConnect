@@ -66,10 +66,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 PWMOutputManager::PWMOutputManager()
 {
-	pinPWMAction = new struct__PinI2CPWMPinAction[MAX_NUMBER_OF_PWM_OUTPUT_PINS]; //40 bits, 5 bytes
+	pinPWMAction = new struct__I2C_Pin_Action[MAX_NUMBER_OF_PWM_OUTPUT_PINS]; //40 bits, 5 bytes
 	addresses = new struct__ConfigDCCAddressing[MAX_NUMBER_OF_PWM_OUTPUT_PINS]; //16 bits, 2 bytes
 	lastLoadedConfig = new struct__ConfigurationPWMPin;
-	memset(pinPWMAction, 0, sizeof(struct__PinI2CPWMPinAction) * MAX_NUMBER_OF_PWM_OUTPUT_PINS);
+	memset(pinPWMAction, 0, sizeof(struct__I2C_Pin_Action) * MAX_NUMBER_OF_PWM_OUTPUT_PINS);
 	memset(addresses, 0, sizeof(struct__ConfigDCCAddressing) * MAX_NUMBER_OF_PWM_OUTPUT_PINS);
 	memset(lastLoadedConfig, 0, sizeof(struct__ConfigurationPWMPin));
 	CurrentPinToUpdate = 0;
@@ -101,7 +101,7 @@ void PWMOutputManager::ChangeServoPosition(struct__Servo_Position_Override& Posi
 			return;
 	}
 
-	struct__PinI2CServoPinAction* pSvoPinAction = reinterpret_cast<struct__PinI2CServoPinAction*>(&pinPWMAction[PositionInfo.Index]);
+	struct__I2C_Servo_Pin_Action* pSvoPinAction = reinterpret_cast<struct__I2C_Servo_Pin_Action*>(&pinPWMAction[PositionInfo.Index]);
 	pSvoPinAction->TargetPosition = PositionInfo.Position;
 	pSvoPinAction->PinStatusBits = PIN_AspectStatus::ASPECT_TURN_ON;
 	if(PositionInfo.MoveFast)
@@ -211,7 +211,7 @@ void PWMOutputManager::ProcessAspectChange(struct__ConfigurationAspectsForPin *a
 	{
 		if (ascpectconfig[i].Instruction != 0)
 		{
-			LR_SPRN(F("P: ")); LR_SPRN(BasePin); LR_SPRN(F(" Ap: ")); LR_SPRN(i); LR_SPRN(F(" Itr: ")); LR_SPRN(ascpectconfig[i].Instruction);	LR_SPRN(F(" D1: ")); LR_SPRN(ascpectconfig[i].Data1); LR_SPRN(F(" D0: ")); LR_SPRNL(ascpectconfig[i].Data0);			
+			//LR_SPRN(F("P: ")); LR_SPRN(BasePin); LR_SPRN(F(" Ap: ")); LR_SPRN(i); LR_SPRN(F(" Itr: ")); LR_SPRN(ascpectconfig[i].Instruction);	LR_SPRN(F(" D1: ")); LR_SPRN(ascpectconfig[i].Data1); LR_SPRN(F(" D0: ")); LR_SPRNL(ascpectconfig[i].Data0);			
 			SetAspectChange(ascpectconfig[i], BasePin, maxControl);
 		}
 	}
@@ -224,7 +224,7 @@ void PWMOutputManager::CVValueHasBeenChanged()
 	loadCVValues();
 }
 
-void PWMOutputManager::ActionRemoveFadeValuesInOffState(struct__PinI2CPWMPinAction &action)
+void PWMOutputManager::ActionRemoveFadeValuesInOffState(struct__I2C_Pin_Action &action)
 {
 	switch (action.Action)
 	{
@@ -250,6 +250,8 @@ bool PWMOutputManager::UpdateAspectActionToNew(const uint8_t &PinIndex, const PI
 		{
 		case PWM_SERVO_POS: //Do not update PinStatusBits for Servo, it is using alternative pinAction struct
 			break;
+		case PWM_VALUE: //Do not update PinStatusBits for PWM_VALUE, it is using alternative pinAction struct
+			break;
 		default:
 			pinPWMAction[PinIndex].PinStatusBits = PIN_AspectStatus::ASPECT_INITIAL;
 			break;
@@ -272,7 +274,7 @@ void PWMOutputManager::SetAspectChange(struct__ConfigurationAspectsForPin &aspec
 			return;
 		}
 		UpdateAspectActionToNew(BasePin + aspect.Data0, PIN_PWM_Action::PWM_BLINK);
-		pinPWMAction[BasePin + aspect.Data0].InptData.value = aspect.Data1;		
+		pinPWMAction[BasePin + aspect.Data0].InptData.value = aspect.Data1;
 		break;
 	case PIN_ASPECT_INSTRUCTION::BlinkInvert:
 		if (aspect.Data0 > MaxPinsToControl)
@@ -292,7 +294,6 @@ void PWMOutputManager::SetAspectChange(struct__ConfigurationAspectsForPin &aspec
 		UpdateAspectActionToNew(BasePin + aspect.Data0, PIN_PWM_Action::PWM_RANDOM_ON);
 		pinPWMAction[BasePin + aspect.Data0].InptData.value = aspect.Data1;
 		break;
-
 	case PIN_ASPECT_INSTRUCTION::AspectMultibit:
 		for (uint8_t i = 0; i < MaxPinsToControl; i++)
 		{
@@ -373,9 +374,30 @@ void PWMOutputManager::SetAspectChange(struct__ConfigurationAspectsForPin &aspec
 			LR_SPRNL(F("Pincount mismatch"));
 		}*/
 		break;
+	case PIN_ASPECT_INSTRUCTION::SetPWMValue:
+	{ //must add these accollades!
+		byte pinIndex = ((aspect.Data0 & 0xE0) >> 5);
+		byte pinTime = (aspect.Data0 & 0x1F);
+
+		if (pinIndex > MaxPinsToControl)
+		{
+			return;
+		}
+
+		struct__I2C_PWM_Pin_Action* pPwmAction = reinterpret_cast<struct__I2C_PWM_Pin_Action*>(&pinPWMAction[BasePin + pinIndex]);
+
+		if (UpdateAspectActionToNew(BasePin + pinIndex, PIN_PWM_Action::PWM_VALUE))
+		{
+			pPwmAction->PinStatusBits = PIN_AspectStatus::ASPECT_INITIAL;
+		}
+		pPwmAction->TargetLevel = aspect.Data1 * 16;
+		pPwmAction->FadeTime = pinTime;
+		
+		break;
+	}
 	case PIN_ASPECT_INSTRUCTION::SetServo:
 	case PIN_ASPECT_INSTRUCTION::SetServoND:
-	{
+	{ //must add these accollades!
 		byte pinIndex = ((aspect.Data0 & 0xE0) >> 5);
 		byte pinTime = (aspect.Data0 & 0x1F);
 
@@ -392,7 +414,7 @@ void PWMOutputManager::SetAspectChange(struct__ConfigurationAspectsForPin &aspec
 			return;
 		}
 
-		struct__PinI2CServoPinAction* pSvoPinAction = reinterpret_cast<struct__PinI2CServoPinAction*>(&pinPWMAction[BasePin + pinIndex]);
+		struct__I2C_Servo_Pin_Action* pSvoPinAction = reinterpret_cast<struct__I2C_Servo_Pin_Action*>(&pinPWMAction[BasePin + pinIndex]);
 
 		if (aspect.Instruction == PIN_ASPECT_INSTRUCTION::SetServo)
 		{
@@ -588,6 +610,11 @@ void PWMOutputManager::ProcessOutputPin(uint8_t i)
 			ProcessServo(i, pinPWMAction[i]);
 		}
 		break;
+	case PWM_VALUE:
+		{
+			ProcessLedValuePWM(i, pinPWMAction[i]);
+		}
+		break;
 	case PWM_RANDOM_ON:
 		//LR_SPRNL("R");
 		ProcessPWMRandomOn(i, pinPWMAction[i]);
@@ -613,22 +640,22 @@ void PWMOutputManager::ProcessOutputPin(uint8_t i)
 	//LR_SPRNL("n");
 }
 
-uint8_t PWMOutputManager::GetCurrentServoPositionAsUint8(struct__PinI2CServoPinAction* pSvoPinAction)
+uint8_t PWMOutputManager::GetCurrentServoPositionAsUint8(struct__I2C_Servo_Pin_Action* pSvoPinAction)
 {
 	return pSvoPinAction->CurrentPosition10bits / 4;
 }
 
-void PWMOutputManager::SetUint8ToCurrentServoPosition(const uint8_t &currentPos, struct__PinI2CServoPinAction* pSvoPinAction)
+void PWMOutputManager::SetUint8ToCurrentServoPosition(const uint8_t &currentPos, struct__I2C_Servo_Pin_Action* pSvoPinAction)
 {
 	pSvoPinAction->CurrentPosition10bits = (unsigned int)(currentPos * 4);
 }
 
-void PWMOutputManager::SetFloatToCurrentServoPosition(const float &currentPos, struct__PinI2CServoPinAction* pSvoPinAction)
+void PWMOutputManager::SetFloatToCurrentServoPosition(const float &currentPos, struct__I2C_Servo_Pin_Action* pSvoPinAction)
 {
 	pSvoPinAction->CurrentPosition10bits = (unsigned int)(currentPos * 4);
 }
 
-void PWMOutputManager::UpdateServoCurrentPosition(struct__PinI2CServoPinAction* pSvoPinAction, float& stepValue)
+void PWMOutputManager::UpdateServoCurrentPosition(struct__I2C_Servo_Pin_Action* pSvoPinAction, float& stepValue)
 {
 	byte CurrentPosition = GetCurrentServoPositionAsUint8(pSvoPinAction);
 	int16_t newPos = ((int16_t)pSvoPinAction->CurrentPosition10bits) + stepValue;
@@ -662,10 +689,70 @@ void PWMOutputManager::UpdateServoCurrentPosition(struct__PinI2CServoPinAction* 
 	}
 }
 
-void PWMOutputManager::ProcessServo(uint8_t pinIndex, struct__PinI2CPWMPinAction& pinAction)
+void PWMOutputManager::ProcessLedValuePWM(uint8_t pinIndex, struct__I2C_Pin_Action& pinAction)
+{
+	//Reinterpet data for pin as PWM value action data
+	struct__I2C_PWM_Pin_Action* pPinPWMActionCast = reinterpret_cast<struct__I2C_PWM_Pin_Action*>(&pinAction);
+
+	if (pPinPWMActionCast->TargetLevel == pPinPWMActionCast->FadeLevel)
+	{
+		pPinPWMActionCast->Action = PIN_PWM_Action::PWM_NONE;
+		return;
+	}
+	else
+	{
+		//if (pPinPWMActionCast->PinStatusBits == PIN_AspectStatus::ASPECT_INITIAL)
+		uint8_t fadeTime = pPinPWMActionCast->FadeTime * 5;
+		uint16_t fadestep = CalculateFadeStepValue(fadeTime);
+
+		uint16_t targetLevel = pPinPWMActionCast->TargetLevel;
+		uint16_t fadeLevel = pPinPWMActionCast->FadeLevel;
+
+		//Level higher than requested
+		if (fadeLevel > targetLevel)
+		{
+			//LR_SPRNL("HD");
+			if (fadeLevel < fadestep)
+			{
+				//LR_SPRNL("#"); //overflow
+				pPinPWMActionCast->FadeLevel = pPinPWMActionCast->TargetLevel;
+			}
+			else if ((fadeLevel - fadestep) > targetLevel)
+			{
+				//LR_SPRNL("-");
+				pPinPWMActionCast->FadeLevel -= fadestep;
+			}
+			else
+			{
+				//LR_SPRNL("=");
+				pPinPWMActionCast->FadeLevel = pPinPWMActionCast->TargetLevel;
+			}			
+		}
+		//Level lower than requested
+		else if (fadeLevel < targetLevel)
+		{
+			//LR_SPRNL("LD");
+			if ((fadeLevel + fadestep) < targetLevel)
+			{
+				//LR_SPRNL("+");
+				pPinPWMActionCast->FadeLevel += fadestep;
+			}
+			else
+			{
+				//LR_SPRNL("=");
+				pPinPWMActionCast->FadeLevel = pPinPWMActionCast->TargetLevel;
+			}
+		}
+		//Todo: implement fading
+		//pPinPWMActionCast->FadeLevel = pPinPWMActionCast->TargetLevel;
+		SetPinLedPWM(pinIndex, pPinPWMActionCast->FadeLevel);
+	}
+}
+
+void PWMOutputManager::ProcessServo(uint8_t pinIndex, struct__I2C_Pin_Action& pinAction)
 {
 	//Reinterpet data for pin as servo action data
-	struct__PinI2CServoPinAction* pSvoPinActionCast = reinterpret_cast<struct__PinI2CServoPinAction*>(&pinAction);
+	struct__I2C_Servo_Pin_Action* pSvoPinActionCast = reinterpret_cast<struct__I2C_Servo_Pin_Action*>(&pinAction);
 
 	if (GetCurrentServoPositionAsUint8(pSvoPinActionCast) == pSvoPinActionCast->TargetPosition)
 	{
@@ -725,7 +812,7 @@ void PWMOutputManager::ProcessServo(uint8_t pinIndex, struct__PinI2CPWMPinAction
 			{ //Check if time is configured
 				stepValue = (float)delta / (pSvoPinActionCast->ServoTime * ServoDelayFactor); //Yes, devide
 			}
-			//LR_SPRN("From:"); LR_SPRNL(SvoPinActionCast->StartPosition); LR_SPRN("To:"); LR_SPRNL(SvoPinActionCast->TargetPosition); LR_SPRN("Delta:" ); LR_SPRNL(delta); LR_SPRN("stepvalue:"); LR_SPRNL(stepValue); LR_SPRN("stepvalueA:"); LR_SPRNL(SvoPinActionCast->CurrentPosition10bits);
+			//LR_SPRN("From:"); LR_SPRNL(pSvoPinActionCast->StartPosition); LR_SPRN("To:"); LR_SPRNL(pSvoPinActionCast->TargetPosition); LR_SPRN("Delta:" ); LR_SPRNL(delta); LR_SPRN("stepvalue:"); LR_SPRNL(stepValue); LR_SPRN("stepvalueA:"); LR_SPRNL(pSvoPinActionCast->CurrentPosition10bits);
 			UpdateServoCurrentPosition(pSvoPinActionCast, stepValue);
 		}
 		break;
@@ -735,7 +822,7 @@ void PWMOutputManager::ProcessServo(uint8_t pinIndex, struct__PinI2CPWMPinAction
 	SetPinServoPWM(pinIndex, pSvoPinActionCast->CurrentPosition10bits);
 }
 
-void PWMOutputManager::ProcessPWMRandomOn(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin)
+void PWMOutputManager::ProcessPWMRandomOn(uint8_t pinIndex, struct__I2C_Pin_Action &pin)
 {
 	uint8_t fadetime = 0;
 	switch (pin.PinStatusBits)
@@ -777,7 +864,7 @@ void PWMOutputManager::ProcessPWMRandomOn(uint8_t pinIndex, struct__PinI2CPWMPin
 	}
 }
 
-void PWMOutputManager::ProcessPWMBlink(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin)
+void PWMOutputManager::ProcessPWMBlink(uint8_t pinIndex, struct__I2C_Pin_Action &pin)
 {
 	if (pin.InptData.value == 0)
 		//Pin has no time configuration
@@ -829,7 +916,7 @@ void PWMOutputManager::ProcessPWMBlink(uint8_t pinIndex, struct__PinI2CPWMPinAct
 	}
 }
 
-bool PWMOutputManager::ProcessPWMSleep(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t& time)
+bool PWMOutputManager::ProcessPWMSleep(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t& time)
 {
 	bool ret = false; //Return if Processing is completed
 	if (pin.FadeLevel != 0)
@@ -852,7 +939,7 @@ bool PWMOutputManager::ProcessPWMSleep(uint8_t pinIndex, struct__PinI2CPWMPinAct
 	return ret;
 }
 
-bool PWMOutputManager::ProcessPWMTurnOff(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time)
+bool PWMOutputManager::ProcessPWMTurnOff(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time)
 {
 	bool ret = false; //Return if Processing is completed
 	if (pin.FadeLevel != 0)
@@ -877,7 +964,7 @@ bool PWMOutputManager::ProcessPWMTurnOff(uint8_t pinIndex, struct__PinI2CPWMPinA
 	return ret;
 }
 
-bool PWMOutputManager::ProcessPWMDimmedOff(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t& time)
+bool PWMOutputManager::ProcessPWMDimmedOff(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t& time)
 {
 	bool ret = false; //Return if Processing is completed
 	if (pin.FadeLevel != 0)
@@ -902,7 +989,7 @@ bool PWMOutputManager::ProcessPWMDimmedOff(uint8_t pinIndex, struct__PinI2CPWMPi
 }
 
 
-bool PWMOutputManager::ProcessPWMDimmedON(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t& time)
+bool PWMOutputManager::ProcessPWMDimmedON(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t& time)
 {
 	uint16_t L_MAXFADELEVEL = (PWM_FADELEVEL_MAX / 15) * pin.InptData.DimmedData.DimmedValue;
 	bool ret = false; //Return if Processing is completed
@@ -928,7 +1015,7 @@ bool PWMOutputManager::ProcessPWMDimmedON(uint8_t pinIndex, struct__PinI2CPWMPin
 	return ret;
 }
 
-bool PWMOutputManager::ProcessPWMFullON(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time)
+bool PWMOutputManager::ProcessPWMFullON(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time)
 {
 	bool ret = false; //Return if Processing is completed
 	if (pin.FadeLevel != PWM_FADELEVEL_MAX)
@@ -979,6 +1066,10 @@ void PWMOutputManager::SetPinServoPWM(const uint8_t &PinIndex, const uint16_t &P
 	{
 		I2C_SetPinPWMValue((idx_board + DeviceAddressStart), idx_boardPin, 0, PWMvalueL);
 	}
+	else
+	{
+		LR_SPRNL("!Brd");
+	}
 }
 
 void PWMOutputManager::SetPinLedPWM(uint8_t PinIndex, uint16_t PWMvalue)
@@ -997,7 +1088,7 @@ void PWMOutputManager::SetPinLedPWM(uint8_t PinIndex, uint16_t PWMvalue)
 			case 0:
 				I2C_SetPinPWMValue((idx_board + DeviceAddressStart), idx_boardPin, 0, PWM_FADELEVEL_FULL_NOPWM);
 				break;
-			case PWM_FADELEVEL_MAX:
+			case PWM_FADELEVEL_MAX ... 0xFFFF:
 				I2C_SetPinPWMValue((idx_board + DeviceAddressStart), idx_boardPin, PWM_FADELEVEL_FULL_NOPWM, 0);
 				break;
 			default:
@@ -1012,7 +1103,7 @@ void PWMOutputManager::SetPinLedPWM(uint8_t PinIndex, uint16_t PWMvalue)
 			case 0:
 				I2C_SetPinPWMValue((idx_board + DeviceAddressStart), idx_boardPin, PWM_FADELEVEL_FULL_NOPWM, 0);
 				break;
-			case PWM_FADELEVEL_MAX:
+			case PWM_FADELEVEL_MAX ... 0xFFFF:
 				I2C_SetPinPWMValue((idx_board + DeviceAddressStart), idx_boardPin, 0, PWM_FADELEVEL_FULL_NOPWM);
 				break;
 			default:

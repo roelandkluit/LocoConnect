@@ -82,6 +82,7 @@ enum PIN_PWM_Action : byte //Max 0x3F --> 63 (6 bit)
 	PWM_RANDOM_ON = 7,
 	PWM_SERVO_POS = 8, //Servo pos
 	PWM_SERVO_POS_ND = 9, //Servo pos No Disconnect
+	PWM_VALUE = 10,
 	PWM_RED_TROUGH_YELLOW = 60
 };
 
@@ -91,6 +92,7 @@ enum PIN_ASPECT_INSTRUCTION:byte //6bit 0 t/m 63
 	AspectMultibit = 1,
 	MultibitOff = 2,
 	MultibitOn = 3,
+	SetPWMValue = 4,
 	RedViaYellow = 10,
 	Blink = 12,
 	BlinkInvert	= 13,
@@ -127,7 +129,7 @@ union PIN_ActionInputData
 	PIN_ActionDataDimmed DimmedData;
 };
 
-struct struct__PinI2CPWMPinAction // 6 + 10 + 8 + 12 + 4 ==> 32 + 8 --> 40
+struct struct__I2C_Pin_Action // 6 + 10 + 8 + 12 + 4 ==> 32 + 8 --> 40
 {
 	PIN_PWM_Action Action : 6;
 	unsigned Reserved : 10;
@@ -136,7 +138,16 @@ struct struct__PinI2CPWMPinAction // 6 + 10 + 8 + 12 + 4 ==> 32 + 8 --> 40
 	PIN_AspectStatus PinStatusBits : 4;	
 };
 
-struct struct__PinI2CServoPinAction // 6 + 4 + 8 ++ 10 + 4 ==> 32 + 8 --> 40
+struct struct__I2C_PWM_Pin_Action // 6 + 12 + 12 + 6 + 4 ==> 40
+{
+	PIN_PWM_Action Action : 6;
+	unsigned FadeLevel : 12;	
+	unsigned TargetLevel: 12;
+	unsigned FadeTime : 6;
+	PIN_AspectStatus PinStatusBits : 4;
+};
+
+struct struct__I2C_Servo_Pin_Action // 6 + 5 + 8 + 8 + 10 + 3 ==> 40
 {
 	PIN_PWM_Action Action : 6;
 	unsigned ServoTime : 5;
@@ -190,7 +201,7 @@ private:
 	unsigned CurrentPinToUpdate:6;
 	unsigned initialLoadOfModule:1;
 	unsigned UpdateServoThisProcessLoop:1;
-	struct__PinI2CPWMPinAction* pinPWMAction;
+	struct__I2C_Pin_Action* pinPWMAction;
 	struct__ConfigDCCAddressing* addresses;
 	struct__ConfigurationPWMPin* lastLoadedConfig;
 	uint16_t CalculateFadeStepValue(uint8_t &time);
@@ -200,27 +211,28 @@ private:
 	uint16_t maxBrightness = PWM_FADELEVEL_MAX;
 	uint8_t pendingFactoryResetPins = 0;
 	unsigned long previousRefreshMillis = 0;
-	bool ProcessPWMFullON(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time);
-	void ProcessPWMBlink(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin);
-	bool ProcessPWMSleep(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time);
-	bool ProcessPWMTurnOff(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time);
-	bool ProcessPWMDimmedOff(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time);
-	bool ProcessPWMDimmedON(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin, uint8_t &time);
-	void ProcessPWMRandomOn(uint8_t pinIndex, struct__PinI2CPWMPinAction &pin);
-	void ProcessServo(uint8_t pinIndex, struct__PinI2CPWMPinAction& pin);
+	bool ProcessPWMFullON(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time);
+	void ProcessPWMBlink(uint8_t pinIndex, struct__I2C_Pin_Action &pin);
+	bool ProcessPWMSleep(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time);
+	bool ProcessPWMTurnOff(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time);
+	bool ProcessPWMDimmedOff(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time);
+	bool ProcessPWMDimmedON(uint8_t pinIndex, struct__I2C_Pin_Action &pin, uint8_t &time);
+	void ProcessPWMRandomOn(uint8_t pinIndex, struct__I2C_Pin_Action &pin);
+	void ProcessServo(uint8_t pinIndex, struct__I2C_Pin_Action & pin);
+	void ProcessLedValuePWM(uint8_t pinIndex, struct__I2C_Pin_Action& pinAction);
 	void ProcessAspectChange(struct__ConfigurationAspectsForPin *ascpectconfig, uint8_t &BasePin);
-	void ActionRemoveFadeValuesInOffState(struct__PinI2CPWMPinAction& action);
+	void ActionRemoveFadeValuesInOffState(struct__I2C_Pin_Action& action);
 	bool UpdateAspectActionToNew(const uint8_t &PinIndex, const PIN_PWM_Action &NewAction);
 	void SetAspectChange(struct__ConfigurationAspectsForPin &aspect, uint8_t &BasePin, uint8_t &MaxPinsToControl);
 	bool ExecuteAspectForPin(uint8_t &PinID, const uint8_t &Direction);
 	void SetPinServoPWM(const uint8_t &PinIndex, const uint16_t &PWM_value);
 	uint8_t GetAspectBasePin(uint8_t &currentPin);
 	uint8_t MaxPinsToControl(uint8_t &BasePin);
-	void SetUint8ToCurrentServoPosition(const uint8_t &currentPos, struct__PinI2CServoPinAction* ServoPin);
-	void SetFloatToCurrentServoPosition(const float &currentPos, struct__PinI2CServoPinAction* ServoPin);
-	void UpdateServoCurrentPosition(struct__PinI2CServoPinAction* pin, float& value);
-	uint8_t GetCurrentServoPositionAsUint8(struct__PinI2CServoPinAction* ServoPin);
-	void ProcessOutputPin(uint8_t pin);
+	void SetUint8ToCurrentServoPosition(const uint8_t &currentPos, struct__I2C_Servo_Pin_Action* ServoPin);
+	void SetFloatToCurrentServoPosition(const float &currentPos, struct__I2C_Servo_Pin_Action* ServoPin);
+	void UpdateServoCurrentPosition(struct__I2C_Servo_Pin_Action* pin, float& value);
+	uint8_t GetCurrentServoPositionAsUint8(struct__I2C_Servo_Pin_Action* ServoPin);
+	void ProcessOutputPin(uint8_t pin);	
 
 	//I2C Functions
 	bool I2C_SetPinPWMValue(const uint8_t& addr, const uint8_t& PinIndex, const uint16_t& onTime, const uint16_t& offTime);
