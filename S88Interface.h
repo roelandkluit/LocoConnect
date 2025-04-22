@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAX_S88_REGISTERS 16
 #define S88_RESET_INTERVAL 5
-#define S88_REFRESH_INTERVAL 50
+#define S88_REFRESH_INTERVAL 100
 #define S88_UPDATE_INTERPACK_GAP 5
 
 class S88Interface : I2CBase, public S88Base
@@ -89,7 +89,10 @@ private:
 	/**
 	 * Contact values
 	 */
-	volatile byte* s88DataValues;
+	volatile byte* s88DataValues = NULL;
+	volatile byte* s88DataValues_second = NULL;
+	volatile byte* s88DataValues_first = NULL;
+
 	/**
 	 * Pending report values
 	 */
@@ -141,7 +144,7 @@ public:
 	* regular S88 Interface version
 	*/
 	S88Interface(const uint8_t& pinData, const uint8_t& pinClock, const uint8_t& pinLoad, const uint8_t& pinReset);// , uint8_t pinData2);
-	void initClass();
+	void initClass(); //bool initSecondArray = false
 	uint8_t GetMaxModuleCount();
 	/**
 	* Set Module Count with the given number of modules

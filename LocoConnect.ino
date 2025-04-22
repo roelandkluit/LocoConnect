@@ -203,6 +203,8 @@ LN_STATUS reportSensorState(uint16_t Address, uint8_t State)
     {
         //Encode State in first bit, needed in case of retransmit
         LastReportedSensorAddress = (Address & 0x7FFF) + (uint16_t(State) << 15);
+        //Ensure to give other devices some room to talk
+        SetLoconetBusyWait();
     }
     return result;
 }
@@ -372,7 +374,6 @@ void OnReportSensor(const uint16_t &report_index, const uint8_t &Status, bool& s
         success = false;
         return;
     }
-
     BoardLeds::SetSysLedON(5);
     success = true;
 }
