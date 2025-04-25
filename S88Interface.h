@@ -61,8 +61,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAX_S88_REGISTERS 16
 #define S88_RESET_INTERVAL 5
-#define S88_REFRESH_INTERVAL 100
+#define S88_REFRESH_INTERVAL 75
 #define S88_UPDATE_INTERPACK_GAP 5
+#define LOOP_COUNT_BEFORE_CLEAR 4
 
 class S88Interface : I2CBase, public S88Base
 {
@@ -90,8 +91,8 @@ private:
 	 * Contact values
 	 */
 	volatile byte* s88DataValues = NULL;
-	volatile byte* s88DataValues_second = NULL;
-	volatile byte* s88DataValues_first = NULL;
+	volatile byte* s88ReportValues = NULL;
+	uint8_t updateReportValuesCounter = 0;
 
 	/**
 	 * Pending report values
@@ -103,6 +104,7 @@ private:
 	void UpdateBit(const uint8_t& pos, const uint8_t& readBitValue);
 	bool RefreshS88DataI2C();
 	bool ProcessReportItems(const bool &ReportActiveAndInactivePins) override;
+	void UpdateReportValues();
 	enum class S88TimingEnum : uint8_t
 	{
 		S88_PHASE_START = 0,
